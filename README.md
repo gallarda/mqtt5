@@ -34,6 +34,8 @@ After cloning this repo in VS Code, you will be asked to open the folder in a de
 
 Typescript declaration files for njs are installed in your workspace to enable Intellisense and autocompletions. Hover over methods in `proxy.js` to see usage info.
 
+A terminal session will automatically open inside the devContainer so you can monitor logs and run test scripts as described above.
+
 To leave the devContainer, select "Reopen folder locally" in the VS Code command palette.  You will need to right click on the `docker-compose.yml` file and select "Compose Down" to shutdown the EMQx broker container.
 
 *Customizing the Code*
@@ -45,9 +47,9 @@ Use `tail -f` to monitor the `mqtt_access.log` and `mqtt_error.log` files in `/v
 
 There are two exported modules in the `proxy.js` file: `prereadMQTT()` and `filterMQTT()`
 
-The `prereadMQTT()` module is used with `js_preread` in *nginx.conf* to parse the CONNECT message and extract useful fields for further processing or logging.  Use `js_var` to make variables available in *nginx.conf.*  See `clientID` and `username` for examples.
+The `prereadMQTT()` module is used with `js_preread` in *nginx.conf* to parse the CONNECT message and extract useful fields for further processing or logging.  Use `js_var` to make variables available in *nginx.conf.*  See `clientID` and `username` for examples. The `test1883.sh` script tests this module.
 
-The `filterMQTT()` module is used with `js_filter.`  After the CONNECT message is parsed, a new CONNECT message is constructed that you can modify before it is sent to the upstream MQTT broker.  Just modify the variables you want to change as shown in the code.
+The `filterMQTT()` module is used with `js_filter.`  After the CONNECT message is parsed, a new CONNECT message is constructed that you can modify before it is sent to the upstream MQTT broker.  Just modify the variables you want to change as shown in the code.  The `test.sh` script tests this module.
 
 The `filterMQTT()` module also contains code to compare the MQTT Client ID to the mTLS Client Certificate Subject DN and reject connections where they don't match.
 
