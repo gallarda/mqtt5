@@ -1,0 +1,8 @@
+version: '3'
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - .:/workspace:cached

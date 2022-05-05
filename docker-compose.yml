@@ -1,0 +1,19 @@
+version: '3'
+services:
+  proxy:
+    image: nginxplus
+    hostname: proxy
+    ports:
+      - "8883:8883"
+      - "1883:1883"
+    volumes:
+      - ./njs:/etc/nginx/njs:ro
+      - ./proxy.conf:/etc/nginx/nginx.conf:ro
+      - ./mtls:/mtls
+    command: sh -c "/mtls/certs.sh && nginx -g 'daemon off;'"
+  broker:
+    image: emqx/emqx
+    hostname: broker
+    ports:
+      - "18083:18083"
+
