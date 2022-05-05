@@ -8,9 +8,9 @@ Use `docker-compose up` to start NGINX and the EMQX MQTT Broker
 
 The following ports will be mapped to localhost on your Docker host:
 
-1883: MQTT in the clear
-8883: MQTT over TLS
-18083: EMQX Dashboard (admin/admin)
+* 1883: MQTT in the clear
+* 8883: MQTT over TLS
+* 18083: EMQX Dashboard (admin/admin)
 
 *Using with Visual Studio Code*
 ---
