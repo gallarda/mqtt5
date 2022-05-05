@@ -58,6 +58,8 @@ The `filterMQTT()` module also contains code to compare the MQTT Client ID to th
 
 NGINX does not support OCSP stapling for the `stream{}` context so we use BIG-IP's *Client Certificate Constrained Delegation* (C3D) feature to handle that for us as shown in the diagram above.
 
+Take a look at the `.devcontainer` and `.vscode` folders to see how the Visual Studio Code was done.
+
 Please open a GitHub issue if you have questions or find a bug.
 
 Thanks in advance for your feedback!
