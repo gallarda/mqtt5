@@ -4,7 +4,7 @@
 
 NOTE: *You must have an existing NGINX Plus Docker image tagged as `nginxplus` with the njs module installed.*
 
-*What does this do?
+*What does this do?*
 ---
 1. Accept incoming TCP connection, decrypt TLS and perform mTLS client authentication
 2. Parse Client Certificate and retrieve Subject DN
