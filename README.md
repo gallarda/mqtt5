@@ -19,7 +19,7 @@ NOTE: *You must have an existing NGINX Plus Docker image tagged as `nginxplus` w
 
 Use `docker-compose up` to start NGINX and the EMQX MQTT Broker
 
-Self signed TLS and mTLS certificates are automatically generated in the *mtls* folder.  The `mosquitto` MQTT clients are also installed in the nginx "proxy" container.  Use `docker exec` to get a shell inside the `mqtt5-proxy-1` container and `cd` into the `/mtls` folder and you will find two shell scripts to make test MQTT connections.  On your host, the mTLS certificates are available in the *mtls* folder for using native MQTT clients like *MQTTx.*
+Self signed TLS and mTLS certificates are automatically generated in the *mtls* folder.  The `mosquitto` MQTT clients are also installed in the nginx "proxy" container.  Use `docker exec` to get a shell inside the `mqtt5-proxy-1` container, `cd` into the `/mtls` folder and you will find two shell scripts to make test MQTT connections.  The `test.sh` script makes a mTLS connection while the `test1883.sh` script connects to port 1883 without encryption.  On your host, the mTLS certificates are available in the *mtls* folder for using native MQTT clients like [MQTT X](https://mqttx.app/).
 
 The following ports will be mapped to localhost on your Docker host:
 
