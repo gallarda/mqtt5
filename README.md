@@ -4,6 +4,16 @@
 
 NOTE: *You must have an existing NGINX Plus Docker image tagged as `nginxplus` with the njs module installed.*
 
+*What does this do?
+---
+1. Accept incoming TCP connection, decrypt TLS and perform mTLS client authentication
+2. Parse Client Certificate and retrieve Subject DN
+3. Parse MQTT CONNECT message (All fields are made available for logging or further processing)
+4. Compare last 9 characters of Client ID in MQTT message to Subject DN in Client Certificate
+5. Reject connection if they don’t match
+6. Construct new MQTT CONNECT message with embedded Subject DN in “username” field
+7. Proxy TCP connection with modified CONNECT message to EMQ X MQTT Brokers
+
 *Using with Docker Compose*
 ---
 
