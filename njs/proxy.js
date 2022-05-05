@@ -57,8 +57,7 @@ function filterMQTT(s) {
                 connectFlags |= 128;  // Bit 7
                 username = s.variables.ssl_client_s_dn;
                 // @ts-ignore
-                s.variables.username = username;
-
+                s.variables.username = username; // Share this variable with NGINX for logging
 
                 // Remove "password" field if desired
                 connectFlags &= ~64;  // Bit 6

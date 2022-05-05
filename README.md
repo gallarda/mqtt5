@@ -19,6 +19,8 @@ NOTE: *You must have an existing NGINX Plus Docker image tagged as `nginxplus` w
 
 Use `docker-compose up` to start NGINX and the EMQX MQTT Broker
 
+Self signed TLS and mTLS certificates are automatically generated in the *mtls* folder.  The `mosquitto` MQTT clients are also installed in the nginx "proxy" container.  Use `docker exec` to get a shell inside the `mqtt5-proxy-1` container and `cd` into the `/mtls` folder and you will find two shell scripts to make test MQTT connections.  On your host, the mTLS certificates are available in the *mtls* folder for using native MQTT clients like *MQTTx.*
+
 The following ports will be mapped to localhost on your Docker host:
 
 * 1883: MQTT in the clear
@@ -28,6 +30,32 @@ The following ports will be mapped to localhost on your Docker host:
 *Using with Visual Studio Code*
 ---
 
-After cloning this repo in VS Code, you will be asked to open a devContainer.  Typescript declaration files for njs are installed to enable Intellisense and autocompletions.  You can right click on the `docker-compose.yml` file and select "Compose Down" to shutdown the containers.
+After cloning this repo in VS Code, you will be asked to open the folder in a devContainer.  When the devContainer opens, the EMQx broker is also started automatically via `docker-compose.`
 
-Files in the workspace can be edited locally or in the container.  Just run `nginx -s reload` in a container terminal after saving a change. In Visual Studio Code, you can trigger a reload by selecting **Run Build Task** (⇧⌘B)
+Typescript declaration files for njs are installed in your workspace to enable Intellisense and autocompletions. Hover over methods in `proxy.js` to see usage info.
+
+To leave the devContainer, select "Reopen folder locally" in the VS Code command palette.  You will need to right click on the `docker-compose.yml` file and select "Compose Down" to shutdown the EMQx broker container.
+
+*Customizing the Code*
+---
+
+Files in the workspace can be edited locally or in the container.  Just run `nginx -s reload` in the `mqtt5-proxy-1` container terminal after saving a change. In Visual Studio Code, you can trigger a reload in the devContainer by selecting **Run Build Task** (⇧⌘B)
+
+Use `tail -f` to monitor the `mqtt_access.log` and `mqtt_error.log` files in `/var/log/nginx` and see how incoming MQTT connections are processed.
+
+There are two exported modules in the `proxy.js` file: `prereadMQTT()` and `filterMQTT()`
+
+The `prereadMQTT()` module is used with `js_preread` in *nginx.conf* to parse the CONNECT message and extract useful fields for further processing or logging.  Use `js_var` to make variables available in *nginx.conf.*  See `clientID` and `username` for examples.
+
+The `filterMQTT()` module is used with `js_filter.`  After the CONNECT message is parsed, a new CONNECT message is constructed that you can modify before it is sent to the upstream MQTT broker.  Just modify the variables you want to change as shown in the code.
+
+The `filterMQTT()` module also contains code to compare the MQTT Client ID to the mTLS Client Certificate Subject DN and reject connections where they don't match.
+
+*Notes*
+---
+
+NGINX does not support OCSP stapling for the `stream{}` context so we use BIG-IP's Client Certificate Constrained Delegation (C3D) feature to handle that for us as shown in the diagram above.
+
+Please open a GitHub issue if you have questions or *gasp* find a bug.
+
+Thanks in advance for your feedback!
