@@ -19,4 +19,4 @@ The following ports will be mapped to localhost on your Docker host:
 
 After cloning this repo in VS Code, you will be asked to open a devContainer.  Typescript declaration files for njs are installed to enable Intellisense and autocompletions.  You can right click on the `docker-compose.yml` file and select "Compose Down" to shutdown the containers.
 
-Files in the workspace can be edited locally or in the container.  Just run `nginx -s reload` in a container terminal after saving a change.
+Files in the workspace can be edited locally or in the container.  Just run `nginx -s reload` in a container terminal after saving a change. In Visual Studio Code, you can trigger a reload by selecting **Run Build Task** (⇧⌘B)
