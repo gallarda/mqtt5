@@ -1,7 +1,7 @@
 # MQTT5
-## MQTTv5 Parser for NGINX JavaScript (njs)
+**MQTTv5 Parser for NGINX JavaScript (njs)**
 
-NOTE: You must have an existing NGINX Plus Docker image tagged as `nginxplus` with the njs module installed.
+NOTE: *You must have an existing NGINX Plus Docker image tagged as `nginxplus` with the njs module installed.*
 
 *Using with Docker Compose*
 ---
