@@ -2,7 +2,7 @@
 **MQTTv5 Parser for NGINX JavaScript (njs)**
 ![MQTT Diagram](MQTTdiagram.png)
 
-NOTE: *You must have an existing NGINX Plus Docker image tagged as `nginxplus` with the njs module installed.*
+NOTE: *You must have an existing NGINX Plus Docker image tagged as `nginxplus` with the njs module installed. [Learn how to make one here.](https://www.nginx.com/blog/deploying-nginx-nginx-plus-docker/#Deploying-NGINX-Plus-with-Docker)*
 
 *What does this do?*
 ---
@@ -54,7 +54,7 @@ The `filterMQTT()` module also contains code to compare the MQTT Client ID to th
 *Notes*
 ---
 
-NGINX does not support OCSP stapling for the `stream{}` context so we use BIG-IP's Client Certificate Constrained Delegation (C3D) feature to handle that for us as shown in the diagram above.
+NGINX does not support OCSP stapling for the `stream{}` context so we use BIG-IP's *Client Certificate Constrained Delegation* (C3D) feature to handle that for us as shown in the diagram above.
 
 Please open a GitHub issue if you have questions or find a bug.
 
