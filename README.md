@@ -27,14 +27,16 @@ The following ports will be mapped to localhost on your Docker host:
 * 8883: MQTT over TLS
 * 18083: EMQX Dashboard (admin/admin)
 
+Use `tail -f` inside the `mqtt5-proxy-1` container to monitor the `mqtt_access.log` and `mqtt_error.log` files in `/var/log/nginx` and see how incoming MQTT connections are processed.
+
 *Using with Visual Studio Code*
 ---
 
-After cloning this repo in VS Code, you will be asked to open the folder in a devContainer.  When the devContainer opens, the EMQx broker is also started automatically via `docker-compose.`
+After cloning this repo in VS Code, you will be asked to open the folder in a devContainer.  This devContainer is the same as the `mqtt5-proxy-1` container described above.  When the devContainer opens, the EMQx broker is also started automatically via `docker-compose.`
 
 Typescript declaration files for njs are installed in your workspace to enable Intellisense and autocompletions. Hover over methods in `proxy.js` to see usage info.
 
-A terminal session will automatically open inside the devContainer so you can monitor logs and run test scripts as described above.
+A terminal session will automatically open inside the devContainer so you can monitor logs, run test scripts, and control NGINX as described above.
 
 To leave the devContainer, select "Reopen folder locally" in the VS Code command palette.  You will need to right click on the `docker-compose.yml` file and select "Compose Down" to shutdown the EMQx broker container.
 
@@ -42,8 +44,6 @@ To leave the devContainer, select "Reopen folder locally" in the VS Code command
 ---
 
 Files in the workspace can be edited locally or in the container.  Just run `nginx -s reload` in the `mqtt5-proxy-1` container terminal after saving a change. In Visual Studio Code, you can trigger a reload in the devContainer by selecting **Run Build Task** (⇧⌘B)
-
-Use `tail -f` to monitor the `mqtt_access.log` and `mqtt_error.log` files in `/var/log/nginx` and see how incoming MQTT connections are processed.
 
 There are two exported modules in the `proxy.js` file: `prereadMQTT()` and `filterMQTT()`
 
