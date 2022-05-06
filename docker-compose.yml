@@ -6,6 +6,7 @@ services:
     ports:
       - "8883:8883"
       - "1883:1883"
+      - "80:80"
     volumes:
       - ./njs:/etc/nginx/njs:ro
       - ./proxy.conf:/etc/nginx/nginx.conf:ro
@@ -14,6 +15,7 @@ services:
   broker:
     image: emqx/emqx
     hostname: broker
+    #scale: 2  # Remove ports: when using scale
     ports:
       - "18083:18083"
 

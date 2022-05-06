@@ -38,7 +38,7 @@ Typescript declaration files for njs are installed in your workspace to enable I
 
 A terminal session will automatically open inside the devContainer so you can monitor logs, run test scripts, and control NGINX as described above.
 
-To leave the devContainer, select "Reopen folder locally" in the VS Code command palette.  You will need to right click on the `docker-compose.yml` file and select "Compose Down" to shutdown the EMQx broker container.
+To leave the devContainer, select "Reopen folder locally" in the VS Code command palette.  You will need to right click on the `docker-compose.yml` file and select "Compose Down" to shutdown containers.
 
 *Customizing the Code*
 ---
@@ -57,6 +57,13 @@ The `filterMQTT()` module also contains code to compare the MQTT Client ID to th
 ---
 
 NGINX does not support OCSP stapling for the `stream{}` context so we use BIG-IP's *Client Certificate Constrained Delegation* (C3D) feature to handle that for us as shown in the diagram above.
+
+The dashboard for EMQ X is available at http://localhost:18083
+The dashboard for NGINX Plus is available at http://localhost/dashboard.html
+
+Session persistence based on MQTT Client ID is enabled.
+
+MQTTv5 active health checks are used to determine broker availability.
 
 Take a look at the `.devcontainer` and `.vscode` folders to see how the Visual Studio Code was done.
 

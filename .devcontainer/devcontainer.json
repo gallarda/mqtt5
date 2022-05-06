@@ -4,7 +4,7 @@
 		"../docker-compose.yml",
 		"docker-compose.yml"
 	],
-	"onCreateCommand": "cp -r /node_modules /workspace",
+	"onCreateCommand": "cp -r /node_modules /workspace && nginx -t",
 	"overrideCommand": false,
 
 	"service": "proxy",

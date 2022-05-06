@@ -6,3 +6,4 @@ services:
       dockerfile: .devcontainer/Dockerfile
     volumes:
       - .:/workspace:cached
+    #command: /bin/sh -c "while sleep 1000; do :; done"
