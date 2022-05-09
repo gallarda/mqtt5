@@ -59,6 +59,7 @@ The `filterMQTT()` module also contains code to compare the MQTT Client ID to th
 NGINX does not support OCSP stapling for the `stream{}` context so we use BIG-IP's *Client Certificate Constrained Delegation* (C3D) feature to handle that for us as shown in the diagram above.
 
 The dashboard for EMQ X is available at http://localhost:18083
+
 The dashboard for NGINX Plus is available at http://localhost/dashboard.html
 
 Session persistence based on MQTT Client ID is enabled.
