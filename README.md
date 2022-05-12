@@ -25,7 +25,7 @@ The following ports will be mapped to localhost on your Docker host:
 
 * 1883: MQTT in the clear
 * 8883: MQTT over TLS
-* 18083: EMQX Dashboard (admin/admin)
+* 18083: EMQX Dashboard (admin/public)
 
 Use `tail -f` inside the `mqtt5-proxy-1` container to monitor the `mqtt_access.log` and `mqtt_error.log` files in `/var/log/nginx` and see how incoming MQTT connections are processed.
 
