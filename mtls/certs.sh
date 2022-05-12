@@ -1,5 +1,6 @@
 CA_NAME=TEST_CA
-CLIENT="std stationId"
+CLIENT1="std station01"
+CLIENT2="std station02"
 cd /mtls
 
 # Install mosquitto clients
@@ -20,8 +21,13 @@ openssl x509 -in server.crt -text -noout
 
 
 # Create the client’s key and certificate; Creating the CSR with the arbitrary Common Name of client
-openssl req -newkey rsa:4096 -keyout client.key -out client.csr -nodes -days 365 -subj "/CN=$CLIENT"
+openssl req -newkey rsa:4096 -keyout client.key -out client.csr -nodes -days 365 -subj "/CN=$CLIENT1"
 # Creating the client’s certificate
 openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -days 365 -out client.crt
 # Inspect ...
 openssl x509 -in client.crt -text -noout
+
+# Create the client’s key and certificate; Creating the CSR with the arbitrary Common Name of client
+openssl req -newkey rsa:4096 -keyout client2.key -out client2.csr -nodes -days 365 -subj "/CN=$CLIENT2"
+# Creating the client’s certificate
+openssl x509 -req -in client2.csr -CA ca.crt -CAkey ca.key -CAcreateserial -days 365 -out client2.crt
