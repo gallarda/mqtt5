@@ -25,6 +25,7 @@ var varHeaderEnd = 0;
 function filterMQTT(s) {
     // Main loop to process inbound packets
     s.on('upstream', function (data, flags) {
+        offset = 0;
         if (data.length == 0) {  // Initial calls may contain no data, so
             s.log("No buffer yet"); // ask that we get called again
             return;
@@ -32,7 +33,7 @@ function filterMQTT(s) {
         } else if (client_messages == 1) { // CONNECT is first packet from the client
 
             packetTypeFlags = data[offset++];
-            s.log("MQTT packet type+flags = " + packetTypeFlags.toString(2));
+            s.log("MQTT Connect packet type+flags = " + packetTypeFlags.toString(2));
 
             // CONNECT packet is 1, using upper 4 bits (00010000 to 00011111)
             if (packetTypeFlags >= 16 && packetTypeFlags < 32) {
@@ -53,27 +54,40 @@ function filterMQTT(s) {
                     throw new Error("Connection Rejected");
                 }
 
-                // Add a "username" field or overwrite existing
-                connectFlags |= 128;  // Bit 7
-                username = s.variables.ssl_client_s_dn;
                 // @ts-ignore
-                s.variables.username = username; // Share this variable with NGINX for logging
+                if (s.variables.filter_connect_ssl_dn == 1) {
+                    // Add a "username" field or overwrite existing
+                    connectFlags |= 128;  // Bit 7
+                    username = s.variables.ssl_client_s_dn;
+                    // @ts-ignore
+                    s.variables.username = username; // Share this variable with NGINX for logging
 
-                // Remove "password" field if desired
-                connectFlags &= ~64;  // Bit 6
+                    // Remove "password" field if desired
+                    connectFlags &= ~64;  // Bit 6
 
-                // Create and send new CONNECT Message
-                var newMsg = newConnect(data);
-                s.send(newMsg, flags);
-                s.off('upstream');
+                    // Create and send new CONNECT Message
+                    var newMsg = newConnect(data);
+                    s.send(newMsg, flags);
+                } else {
+                    s.send(data, flags);
+                }
+                // @ts-ignore
+                if (s.variables.filter_all == 0) {
+                    s.log("Disabling message processing");
+                    s.off('upstream');
+                    s.allow();
+                }
 
             } else {
                 s.log("ABORT: Received unexpected MQTT packet type+flags: " + packetTypeFlags.toString());
                 throw new Error("Connection Rejected");
             }
+        } else { // Continue processing messages from clients when s.variables.filter_all == 1
+            packetTypeFlags = data[offset++];
+            s.log("MQTT packet: " + clientID +"(" + client_messages  +") type+flags = " + packetTypeFlags.toString(2));
+            s.send(data, flags);
         }
         client_messages++;
-        s.allow();
     });
 }
 
