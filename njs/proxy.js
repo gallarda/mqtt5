@@ -2,6 +2,30 @@
 /// <reference path="../node_modules/njs-types/ngx_stream_js_module.d.ts" />
 
 // Global variables
+var packetType = Object.freeze({
+    CONNECT: 1,
+    CONNACK: 2,
+    PUBLISH: 3,
+    PUBACK: 4,
+    PUBREC: 5,
+    PUBREL: 6,
+    PUBCOMP: 7,
+    SUBSCRIBE: 8,
+    SUBACK: 9,
+    UNSUBSCRIBE: 10,
+    UNSUBACK: 11,
+    PING: 12,
+    PINGRES: 13,
+    DISCONNECT: 14,
+    AUTH: 15,
+    value: {1: "CONNECT", 2: "CONNACK", 3: "PUBLISH", 4: "PUBACK", 5: "PUBREC", 6: "PUBREL",
+            7: "PUBCOMP", 8: "SUBSCRIBE", 9: "SUBACK", 10: "UNSUBSCRIBE", 11: "UNSUBACK",
+            12: "PING", 13: "PINGRES", 14: "DISCONNECT", 15: "AUTH" }
+} );
+
+var retain = 0;
+var duplicate = 0;
+var qos = 0;
 
 // Variables parsed from MQTT message.
 var packetTypeFlags = 0;
@@ -33,7 +57,7 @@ function filterMQTT(s) {
         } else if (client_messages == 1) { // CONNECT is first packet from the client
 
             packetTypeFlags = data[offset++];
-            s.log("MQTT Connect packet type+flags = " + packetTypeFlags.toString(2));
+            s.log("MQTT packet type+flags = " + getPacketType(packetTypeFlags));
 
             // CONNECT packet is 1, using upper 4 bits (00010000 to 00011111)
             if (packetTypeFlags >= 16 && packetTypeFlags < 32) {
@@ -45,17 +69,18 @@ function filterMQTT(s) {
                 // @ts-ignore
                 s.variables.username = username;
 
-                // Get Subject DN from client SSL cert
-                s.log("Subject DN value = " + s.variables.ssl_client_s_dn);
-
-                // Compare to MQTT client ID and reject connection if they don't match
-                if (clientID.substr(-9) != s.variables.ssl_client_s_dn.substr(-9)) {
-                    s.log("ACCESS DENIED: ClientId/Subject Mismatch");
-                    throw new Error("Connection Rejected");
-                }
-
                 // @ts-ignore
                 if (s.variables.filter_connect_ssl_dn == 1) {
+
+                    // Get Subject DN from client SSL cert
+                    s.log("Subject DN value = " + s.variables.ssl_client_s_dn);
+
+                    // Compare to MQTT client ID and reject connection if they don't match
+                    if (clientID.substr(-9) != s.variables.ssl_client_s_dn.substr(-9)) {
+                        s.log("ACCESS DENIED: ClientId/Subject Mismatch");
+                        throw new Error("Connection Rejected");
+                    }
+
                     // Add a "username" field or overwrite existing
                     connectFlags |= 128;  // Bit 7
                     username = s.variables.ssl_client_s_dn;
@@ -84,7 +109,7 @@ function filterMQTT(s) {
             }
         } else { // Continue processing messages from clients when s.variables.filter_all == 1
             packetTypeFlags = data[offset++];
-            s.log("MQTT packet: " + clientID +"(" + client_messages  +") type+flags = " + packetTypeFlags.toString(2));
+            s.log("MQTT packet: " + clientID +"(" + client_messages  +") type+flags = " + getPacketType(packetTypeFlags));
             s.send(data, flags);
         }
         client_messages++;
@@ -170,6 +195,18 @@ function decodeLength(data) {
         multiplier *= 128;
     } while ((data[offset++] & 128) != 0);
     return value;
+}
+
+// Get the Packet Type
+function getPacketType(typeflags) {
+    let pt = packetType.value[typeflags >>4]
+    let flags = typeflags &15
+    if ( pt == packetType.PUBLISH) {
+        retain = flags & 1
+        qos = flags >> 1 & 3
+        duplicate = flags >> 3 & 1
+    }
+    return pt;
 }
 
 // Extract Field from buffer based on length defined by 2-byte encoding
