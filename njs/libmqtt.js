@@ -1,7 +1,7 @@
 //@ts-check
 /// <reference path="../node_modules/njs-types/ngx_stream_js_module.d.ts" />
 
-export default { packetType, getPacketType, parsePacket, newConnect }
+export default { packetType, getPacketType, parsePacket, parseProperties, newConnect }
 
 // Enumeration of MQTT Control packets. Correct for v5, but type 15 is reserved in v3.1.1
 var packetType = Object.freeze({
@@ -32,6 +32,59 @@ var mqttVersion = Object.freeze({
     V310: 3,
     value: {3: "V310", 4: "V311", 5: "V500"},
     support: {3: true, 4: true, 5: true} 
+});
+
+// Enumeration of MQTTv5 Property types
+var mqttPropType = Object.freeze({
+    BYTE1: 1,
+    BYTE2: 2,
+    BYTE4: 3,
+    UTF8: 4,
+    BINDATA: 5,
+    VARINT: 6,
+    UTF8PAIR: 7,
+});
+
+// Enumeration of MQTTv5 Properties
+var mqttProperty = Object.freeze({
+    PayloadFormat: 1,
+    MessageExpInt: 2,
+    ContentType: 3,
+    ResponseTopic: 8,
+    CorrelationData: 9,
+    SubscriptionId: 11,
+    SessionExpiryInt: 17,
+    AssignedClientId: 18,
+    ServerKeepAlive: 19,
+    AuthMethod: 21,
+    AuthData: 22,
+    ReqProbInfo: 23,
+    WillDelayInt: 24,
+    ReqResInfo: 25,
+    ResInfo: 26,
+    ServerRef: 28,
+    ReasonString: 31,
+    ReceiveMax: 33,
+    TopicAliasMax: 34,
+    TopicAlias: 35,
+    MaxQoS: 36,
+    RetainAvail: 37,
+    UserProperty: 38,
+    MaxPacketSize: 39,
+    WildSubAvail: 40,
+    SubIdAvail: 41,
+    SharedSubAvail: 42,
+    values: {1: "PayloadFormat", 2: "MessageExpInt", 3: "ContentType", 8: "ResponseTopic", 9: "CorrelationData",
+            11: "SubscriptionId", 17: "SessionExpiryInt", 18: "AssignedClientId", 19: "ServerKeepAlive", 21: "AuthMethod",
+            22: "AuthData", 23: "ReqProbInfo", 24: "WillDelayInt", 25: "ReqResInfo", 26: "ResInfo", 28: "ServerRef",
+            31: "ReasonString", 33: "ReceiveMax", 34: "TopicAliasMax", 35: "TopicAlias", 36: "MaxQoS", 37: "RetainAvail",
+            38: "UserProperty", 39: "MaxPacketSize", 40: "WildSubAvail", 41: "SubIdAvail", 42:"SharedSubAvail"},
+    dataType: {1: mqttPropType.BYTE1, 2: mqttPropType.BYTE4, 3: mqttPropType.UTF8, 8: mqttPropType.UTF8, 9: mqttPropType.BINDATA,
+            11: mqttPropType.VARINT, 17: mqttPropType.BYTE4, 18: mqttPropType.UTF8, 19: mqttPropType.BYTE2, 21: mqttPropType.UTF8,
+            22: mqttPropType.BINDATA, 23: mqttPropType.BYTE1, 24: mqttPropType.BYTE4, 25: mqttPropType.BYTE1, 26: mqttPropType.UTF8,
+            28: mqttPropType.UTF8, 31: mqttPropType.UTF8, 33: mqttPropType.BYTE2, 34: mqttPropType.BYTE2, 35: mqttPropType.BYTE2,
+            36: mqttPropType.BYTE1, 37: mqttPropType.BYTE1, 38: mqttPropType.UTF8PAIR, 39: mqttPropType.BYTE4, 40: mqttPropType.BYTE1,
+            41: mqttPropType.BYTE1, 42: mqttPropType.BYTE1 }
 });
 
 /**
@@ -83,12 +136,121 @@ function parsePacket(s, data) {
             parseConnect(s, packet)
             break;
         default:
-            s.log("Unimplemented Packet " + packetType.value[packet.type] + ", " + packet.type);
+            //s.log("Unimplemented Packet " + packetType.value[packet.type] + ", " + packet.type);
             break;
     }
 
     return packet;
 }
+
+/**
+ * @param {NginxStreamRequest} s
+ * @param {Object} packet
+ * @param {Boolean} will
+ **/
+// Parse the properties section of a MQTT packet or will and store the details
+// under packet.props or packet.connect.willProps.
+function parseProperties(s, packet, will) {
+    var pEnd = 0;
+    var props = {
+        userdata: {}
+    };
+
+    // Properties only exist in V5.
+    if ( packet.version != mqttVersion.V500 ) {
+        return;
+    }
+
+    // Set the offset to the start of the packet or the will properties.
+    if (will && (packet.connect.willPropStart)) {
+        packet.offset = packet.connect.willPropStart;
+        pEnd = packet.connect.willPropStart + packet.connect.willPropLength -1;
+        packet.connect.willProps = props;
+    } else if (packet.propStart) {
+        packet.offset = packet.propStart;
+        pEnd = packet.propStart + packet.propLength -1;
+        packet.props = props;
+    } else {
+        s.log("Warning - this packet has no properties")
+        return;
+    }
+
+    while ( packet.offset < pEnd ) {
+        let myType = packet.data[packet.offset++];
+        let myProp = {};
+        myProp.type = mqttProperty.values[myType]
+        switch (mqttProperty.dataType[myType]) {
+            case mqttPropType.BINDATA:
+                myProp.data = cutField(packet);
+                break;
+            case mqttPropType.BYTE1:
+                myProp.data = packet.data[packet.offset++];
+                break;
+            case mqttPropType.BYTE2:
+                myProp.data = getInt16(packet);
+                break;
+            case mqttPropType.BYTE4:
+                myProp.data = getInt32(packet);
+                break;
+            case mqttPropType.UTF8:
+                myProp.data = cutField(packet);
+                break;
+            case mqttPropType.UTF8PAIR:
+                myProp.name = cutField(packet);
+                myProp.value = cutField(packet);
+                myProp.data = myProp.name + "=" + myProp.value;
+                break;
+            case mqttPropType.VARINT:
+                myProp.data = decodeLength(packet);
+                break;
+        }
+
+        // Can you have duplicate properties???? Spec doesn't say???
+        // Duplicates will be converted to arrays if we encounter them.
+        if ( myType != mqttProperty.UserProperty ) {
+            if ( mqttProperty.values[myType] in props ) {
+                props[mqttProperty.values[myType]] = [ props[mqttProperty.values[myType]] ];
+                props[mqttProperty.values[myType]].push( myProp.data )
+            } else {
+                props[mqttProperty.values[myType]] = myProp.data;
+            }
+        } else if ( myProp.name in props.userdata ) {
+            props.userdata[myProp.name] = [ props.userdata[myProp.name] ]
+            props.userdata[myProp.name].push( myProp.value );
+        } else {
+            props.userdata[myProp.name] = myProp.value;
+        }
+    }
+}
+
+// Create a new CONNECT message based on modified user/password fields
+function newConnect(packet) {
+    var newHeader = packet.data.subarray(packet.connect.varHeaderStart, packet.connect.varHeaderEnd);
+    var newLength = newHeader.length;
+    var newFields = [newHeader];
+
+    if (packet.connect.flags & 128) {
+        var userBuf = setField(packet.connect.username);
+        newLength += userBuf.length;
+        newFields.push(userBuf);
+    }
+
+    if (packet.connect.flags & 64) {
+        var passBuf = setField(packet.connect.password);
+        newLength += passBuf.length;
+        newFields.push(passBuf);
+    }
+
+    var verBuf = Buffer.from(setField(packet.verString).toString('hex') + pad(packet.version) + packet.connect.flags.toString(16), 'hex')
+    newFields.unshift(verBuf);
+    newLength += verBuf.length;
+
+    newFields.unshift(Buffer.from(packet.typeFlags.toString(16) + encodeLength(newLength), 'hex'));
+
+    return Buffer.concat(newFields);
+}
+
+// Internal functions
 
 /**
  * @param {NginxStreamRequest} s
@@ -128,13 +290,13 @@ function parseConnect(s, packet) {
 
     s.log("Keep Alive = " + getInt16(packet));
 
-    // Skip over CONNECT Properties on V5. Store the offset and length incase
+    // Skip over Properties on V5. Store the offset and length incase
     // we want to inspect or modify later
     if ( packet.version == mqttVersion.V500) {
-        packet.connect.propLength = decodeLength(packet);
-        s.log("CONNECT Properties  = " + packet.connect.propLength + " bytes");
-        packet.connect.propStart = packet.offset;
-        packet.offset += packet.connect.propLength;
+        packet.propLength = decodeLength(packet);
+        s.log("CONNECT Properties  = " + packet.propLength + " bytes");
+        packet.propStart = packet.offset;
+        packet.offset += packet.propLength;
     }
     
     // Get Client Identifier
@@ -176,41 +338,19 @@ function parseConnect(s, packet) {
     s.log("Expected length: " + packet.length + " Parsed Length: " + packet.offset);
 }
 
-// Create a new CONNECT message based on modified user/password fields
-function newConnect(packet) {
-    var newHeader = packet.data.subarray(packet.connect.varHeaderStart, packet.connect.varHeaderEnd);
-    var newLength = newHeader.length;
-    var newFields = [newHeader];
-
-    if (packet.connect.flags & 128) {
-        var userBuf = setField(packet.connect.username);
-        newLength += userBuf.length;
-        newFields.push(userBuf);
-    }
-
-    if (packet.connect.flags & 64) {
-        var passBuf = setField(packet.connect.password);
-        newLength += passBuf.length;
-        newFields.push(passBuf);
-    }
-
-    var verBuf = Buffer.from(setField(packet.verString).toString('hex') + pad(packet.version) + packet.connect.flags.toString(16), 'hex')
-    newFields.unshift(verBuf);
-    newLength += verBuf.length;
-
-    newFields.unshift(Buffer.from(packet.typeFlags.toString(16) + encodeLength(newLength), 'hex'));
-
-    return Buffer.concat(newFields);
-}
-
-// Internal functions
-
 // Zero pad one digit number
 function pad(n) { return n < 10 ? '0' + n : n }
 
 // Read the next two bytes in the buffer as a 16 bit Big Endian Integer
 function getInt16(packet) {
     var value = packet.data.readInt16BE([packet.offset++]);
+    packet.offset++;
+    return value;
+}
+
+// Read the next 4 bytes in the buffer as a 32 bit Big Endian Integer
+function getInt32(packet) {
+    var value = packet.data.readInt32BE([packet.offset++]);
     packet.offset++;
     return value;
 }

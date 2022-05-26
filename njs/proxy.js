@@ -28,6 +28,9 @@ function filterMQTT(s) {
 
                 s.log("MQTT packet type+flags = " + packet.typeFlags);
 
+                mqtt.parseProperties(s, packet, false);
+                s.log( "Properties: " + JSON.stringify( packet.props ));
+
                 // @ts-ignore
                 s.variables.clientid = packet.connect.clientID;
 
