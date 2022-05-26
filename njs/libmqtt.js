@@ -351,7 +351,7 @@ function getInt16(packet) {
 // Read the next 4 bytes in the buffer as a 32 bit Big Endian Integer
 function getInt32(packet) {
     var value = packet.data.readInt32BE([packet.offset++]);
-    packet.offset++;
+    packet.offset += 3;
     return value;
 }
 
