@@ -31,7 +31,7 @@ var mqttVersion = Object.freeze({
     V311: 4,
     V310: 3,
     value: {3: "V310", 4: "V311", 5: "V500"},
-    support: {4: true, 5: true} 
+    support: {3: true, 4: true, 5: true} 
 });
 
 /**
@@ -64,6 +64,7 @@ function parsePacket(s, data) {
         ret: 0,
         qos: 0,
         dup: 0,
+        verString: "",
         version: 0,
         payloadLength: 0,
         length: 0
@@ -100,18 +101,19 @@ function parseConnect(s, packet) {
 
     // Verify protocol name and store version
     // Abort if not MQTT Connect
-    var mqttVerString = cutField(packet);
+    packet.verString = cutField(packet);
     packet.version = packet.data[packet.offset++]
-    if ( (mqttVerString != "MQTT") && (mqttVerString != "MQIsdp")  ) {
+    if ( (packet.verString != "MQTT") && (packet.verString != "MQIsdp")  ) {
         s.log("ABORT: Packet not MQTT");
         throw new Error("Connection Rejected");
     }
 
     // Reject unsupported versions here.
     if ( mqttVersion.support[packet.version] != true ) {
-        s.log("ABORT: Packet version not supported: " + mqttVersion.value[packet.version]);
+        s.log("ABORT: Packet version not supported: " + packet.verString + " " + mqttVersion.value[packet.version]);
         throw new Error("Connection Rejected");
     }
+    s.log("Connect Accepted: " + packet.verString + " " + mqttVersion.value[packet.version]);
 
     // Retrieve Connect Flags and Keep Alive
     packet.connect = {
@@ -192,8 +194,9 @@ function newConnect(packet) {
         newFields.push(passBuf);
     }
 
-    newFields.unshift(Buffer.from(setField("MQTT").toString('hex') + pad(packet.version) + packet.connect.flags.toString(16), 'hex'));
-    newLength += 8;
+    var verBuf = Buffer.from(setField(packet.verString).toString('hex') + pad(packet.version) + packet.connect.flags.toString(16), 'hex')
+    newFields.unshift(verBuf);
+    newLength += verBuf.length;
 
     newFields.unshift(Buffer.from(packet.typeFlags.toString(16) + encodeLength(newLength), 'hex'));
 
