@@ -36,11 +36,11 @@ function prereadMQTT(s) {
                 mqtt.parseProperties(s, packet, false);
                 s.log( "Properties: " + JSON.stringify( packet.props ));
 
-                s.variables.propver = packet.props.userdata.sw_version;
+                s.variables.propver = (packet.props.userdata.sw_version ? packet.props.userdata.sw_version : "-");
                 if ( s.variables.upstream_servers == "REJECT" ) {
                     s.log("ACCESS DENIED: Unkown or missing Software Version");
                     s.deny();
-                    //throw new Error("Connection Rejected");
+                    throw new Error("Connection Rejected");
                 }
 
                 s.off('upstream');
