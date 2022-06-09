@@ -9,6 +9,7 @@ var client_messages = 1;
 
 // Parse MQTT with js_preread()
 function prereadMQTT(s) {
+
     // Main loop to process inbound packets
     s.on('upstream', function (data, flags) {
         
@@ -36,12 +37,13 @@ function prereadMQTT(s) {
                 mqtt.parseProperties(s, packet, false);
                 s.log( "Properties: " + JSON.stringify( packet.props ));
 
-                s.variables.propver = (packet.props.userdata.sw_version ? packet.props.userdata.sw_version : "-");
-                if ( s.variables.upstream_servers == "REJECT" ) {
-                    s.log("ACCESS DENIED: Unkown or missing Software Version");
+                if ( packet.version != mqtt.mqttVersion.V500 ) {
+                    s.log("ACCESS DENIED: Invalid MQTT Version");
                     s.deny();
                     throw new Error("Connection Rejected");
                 }
+
+                s.variables.propver = (packet.props.userdata.sw_version ? packet.props.userdata.sw_version : "-");
 
                 s.off('upstream');
 
@@ -55,5 +57,16 @@ function prereadMQTT(s) {
     });
 }
 
-export default { prereadMQTT }
+function filterMQTT(s) {
+    if ( s.variables.upstream_servers == "REJECT" ) {
+        s.on('downstream', function (data, flags) {
+            let reject = mqtt.RejectConnection(mqtt.reasonCode.CONNACK.NotAuthorized, "Unsupported Software Version");
+            s.log("Rejecting Connection: " + reject.toString('hex'));
+            s.send(reject, { "last": true, "flush": true });
+            s.done();
+        });
+    }
+}
+
+export default { prereadMQTT, filterMQTT }
 

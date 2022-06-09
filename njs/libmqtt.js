@@ -1,7 +1,8 @@
 //@ts-check
 /// <reference path="../node_modules/njs-types/ngx_stream_js_module.d.ts" />
 
-export default { packetType, getPacketType, parsePacket, parseProperties, newConnect }
+export default { packetType, mqttVersion, mqttPropType, mqttProperty, reasonCode,
+    getPacketType, parsePacket, parseProperties, newConnect, RejectConnection }
 
 // Enumeration of MQTT Control packets. Correct for v5, but type 15 is reserved in v3.1.1
 var packetType = Object.freeze({
@@ -74,7 +75,7 @@ var mqttProperty = Object.freeze({
     WildSubAvail: 40,
     SubIdAvail: 41,
     SharedSubAvail: 42,
-    values: {1: "PayloadFormat", 2: "MessageExpInt", 3: "ContentType", 8: "ResponseTopic", 9: "CorrelationData",
+    value:  {1: "PayloadFormat", 2: "MessageExpInt", 3: "ContentType", 8: "ResponseTopic", 9: "CorrelationData",
             11: "SubscriptionId", 17: "SessionExpiryInt", 18: "AssignedClientId", 19: "ServerKeepAlive", 21: "AuthMethod",
             22: "AuthData", 23: "ReqProbInfo", 24: "WillDelayInt", 25: "ReqResInfo", 26: "ResInfo", 28: "ServerRef",
             31: "ReasonString", 33: "ReceiveMax", 34: "TopicAliasMax", 35: "TopicAlias", 36: "MaxQoS", 37: "RetainAvail",
@@ -85,6 +86,132 @@ var mqttProperty = Object.freeze({
             28: mqttPropType.UTF8, 31: mqttPropType.UTF8, 33: mqttPropType.BYTE2, 34: mqttPropType.BYTE2, 35: mqttPropType.BYTE2,
             36: mqttPropType.BYTE1, 37: mqttPropType.BYTE1, 38: mqttPropType.UTF8PAIR, 39: mqttPropType.BYTE4, 40: mqttPropType.BYTE1,
             41: mqttPropType.BYTE1, 42: mqttPropType.BYTE1 }
+});
+
+var reasonCode = Object.freeze({
+    CONNACK: {
+        Success:            0,
+        UnspecifiedError:   128,
+        MalformedPacket:    129,
+        ProtocolError:      130,
+        ImplSpecError:      131,
+        ProtoVersionUnsp:   132,
+        ClientIdInvalid:    133,
+        BadUserPass:        134,
+        NotAuthorized:      135,
+        ServerUnavailable:  136,
+        ServerBusy:         137,
+        Banned:             138,
+        BadAuthMethod:      140,
+        TopicNameInvalid:   144,
+        PacketTooLarge:     149,
+        QuotaExceeded:      151,
+        PayloadFmtInvalid:  153,
+        RetainNotSupported: 154,
+        QoSNotSupported:    155,
+        UseAnotherServer:   156,
+        ServerMoved:        157,
+        ConnRateExceeded:   159,
+    },
+    PUBACK: {
+        Success:            0,
+        SubsNoMatch:        16,
+        UnspecifiedError:   128,
+        ImplSpecError:      131,
+        NotAuthorized:      135,
+        TopicNameInvalid:   144,
+        PacketIdInUse:      145,
+        QuotaExceeded:      151,
+        PayloadFmtInvalid:  153,
+    },
+    PUBREC: {
+        Success:            0,
+        SubsNoMatch:        16,
+        UnspecifiedError:   128,
+        ImplSpecError:      131,
+        NotAuthorized:      135,
+        TopicNameInvalid:   144,
+        PacketIdInUse:      145,
+        QuotaExceeded:      151,
+        PayloadFmtInvalid:  153,
+    },
+    PUBREL: {
+        Success:            0,
+        PacketIdNotFound:   146,
+    },
+    PUBCOMP: {
+        Success:            0,
+        PacketIdNotFound:   146,
+    },
+    SUBACK: {
+        GrantedQoS0:        0,
+        GrantedQoS1:        1,
+        GrantedQoS2:        2,
+        UnspecifiedError:   128,
+        ImplSpecError:      131,
+        NotAuthorized:      135,
+        TopicFilterInvalid: 143,
+        PacketIdInUse:      145,
+        QuotaExceeded:      151,
+        SharedSubsNotSpt:   158,
+        SubIDNotSupported:  161,
+        WildcardSubNotSpt:  162,
+    },
+    UNSUBACK: {
+        Success:            0,
+        SubsNoExist:        17,
+        UnspecifiedError:   128,
+        ImplSpecError:      131,
+        NotAuthorized:      135,
+        TopicFilterInvalid: 143,
+        PacketIdInUse:      145,
+    },
+    DISCONNECT: {
+        Normal:             0,
+        DiscWithWill:        4,
+        UnspecifiedError:   128,
+        MalformedPacket:    129,
+        ProtocolError:      130,
+        ImplSpecError:      131,
+        NotAuthorized:      135,
+        ServerBusy:         137,
+        ServerShutDown:     139,
+        BadAuthMethod:      140,
+        KeepAliveTimeOut:   141,
+        SessionTakeOver:    142,
+        TopicFilterInvalid: 143,
+        TopicNameInvalid:   144,
+        RecieveMaxExceeded: 147,
+        TopicAliasInvalid:  148,
+        PacketTooLarge:     149,
+        MessageRateTooHigh: 150,
+        QuotaExceeded:      151,
+        AdminAction:        152,
+        PayloadFmtInvalid:  153,
+        RetainNotSupported: 154,
+        QoSNotSupported:    155,
+        UseAnotherServer:   156,
+        ServerMoved:        157,
+        SharedSubsNotSpt:   158,
+        ConnRateExceeded:   159,
+        MaxConnectTime:     160,
+        SubIDNotSupported:  161,
+        WildcardSubNotSpt:  162,
+    },
+    AUTH: {
+        Success:            0,
+        Continue:           24,
+        ReAuthenticate:     25,
+    },
+    value: { 0: "Success", 1: "GrantedQoS1", 2: "GrantedQoS2", 4: "DiscWithWill", 128: "UnspecifiedError", 129: "MalformedPacket",
+            130: "ProtocolError", 131: "ImplSpecError", 132: "ProtoVersionUnsp", 133: "ClientIdInvalid", 134: "BadUserPass", 135: "NotAuthorized",
+            136: "ServerUnavailable", 137: "ServerBusy", 138: "Banned", 139: "ServerShutDown", 140: "BadAuthMethod", 141: "KeepAliveTimeOut",
+            142: "SessionTakeOver", 143: "TopicFilterInvalid", 144: "TopicNameInvalid", 145: "PacketIdInUse", 146: "PacketIdNotFound",
+            147: "RecieveMaxExceeded", 148: "TopicAliasInvalid", 149: "PacketTooLarge", 150: "MessageRateTooHigh",
+            151: "QuotaExceeded", 152: "AdminAction", 153: "PayloadFmtInvalid", 154: "RetainNotSupported", 155: "QoSNotSupported",
+            156: "UseAnotherServer", 157: "ServerMoved", 158: "SharedSubsNotSpt", 159: "ConnRateExceeded", 160: "MaxConnectTime",
+            161: "SubIDNotSupported", 162: "WildcardSubNotSpt"
+    }
 });
 
 /**
@@ -178,7 +305,7 @@ function parseProperties(s, packet, will) {
     while ( packet.offset < pEnd ) {
         let myType = packet.data[packet.offset++];
         let myProp = {};
-        myProp.type = mqttProperty.values[myType]
+        myProp.type = mqttProperty.value[myType]
         switch (mqttProperty.dataType[myType]) {
             case mqttPropType.BINDATA:
                 myProp.data = cutField(packet);
@@ -208,11 +335,11 @@ function parseProperties(s, packet, will) {
         // Can you have duplicate properties???? Spec doesn't say???
         // Duplicates will be converted to arrays if we encounter them.
         if ( myType != mqttProperty.UserProperty ) {
-            if ( mqttProperty.values[myType] in props ) {
-                props[mqttProperty.values[myType]] = [ props[mqttProperty.values[myType]] ];
-                props[mqttProperty.values[myType]].push( myProp.data )
+            if ( mqttProperty.value[myType] in props ) {
+                props[mqttProperty.value[myType]] = [ props[mqttProperty.value[myType]] ];
+                props[mqttProperty.value[myType]].push( myProp.data )
             } else {
-                props[mqttProperty.values[myType]] = myProp.data;
+                props[mqttProperty.value[myType]] = myProp.data;
             }
         } else if ( myProp.name in props.userdata ) {
             props.userdata[myProp.name] = [ props.userdata[myProp.name] ]
@@ -250,7 +377,53 @@ function newConnect(packet) {
     return Buffer.concat(newFields);
 }
 
+function RejectConnection(code, reason) {
+    let encoded;
+    let newPacket;
+    if ( reason.length > 0) {
+        encoded = encodeProperty(mqttProperty.ReasonString, reason);
+        newPacket = Buffer.from( [packetType.CONNACK <<4, encoded.length + 3, 0, code, encoded.length ] );
+        newPacket = Buffer.concat([ newPacket, encoded ] );
+    } else {
+        newPacket = Buffer.from( [packetType.CONNACK <<4, 3, 0, code, 0 ] );
+    }
+    return newPacket;
+}
+
 // Internal functions
+
+
+function encodeProperty(type, data) {
+    var typeBuffer = Buffer.alloc(1);
+    typeBuffer.writeInt8(type, 0);
+    var encoded = [ typeBuffer ];
+    switch (mqttProperty.dataType[type]) {
+        case mqttPropType.BINDATA:
+            encoded.push(setField(data));
+            break;
+        case mqttPropType.BYTE1:
+            encoded.push(data)
+            break;
+        case mqttPropType.BYTE2:
+            encoded.push(setInt16(data));
+            break;
+        case mqttPropType.BYTE4:
+            encoded.push(setInt32(data));
+            break;
+        case mqttPropType.UTF8:
+            encoded.push(setField(data));
+            break;
+        case mqttPropType.UTF8PAIR:
+            let k = setField(data);
+            let v = setField(data);
+            encoded.push(k,v);
+            break;
+        case mqttPropType.VARINT:
+            encoded.push( Buffer.from(encodeLength(data)));
+            break;
+    }
+    return Buffer.concat(encoded);
+}
 
 /**
  * @param {NginxStreamRequest} s
@@ -353,6 +526,18 @@ function getInt32(packet) {
     var value = packet.data.readInt32BE([packet.offset++]);
     packet.offset += 3;
     return value;
+}
+
+function setInt16(number) {
+    var fieldBuffer = Buffer.alloc(2);
+    fieldBuffer.writeInt16BE(number);
+    return fieldBuffer;
+}
+
+function setInt32(number) {
+    var fieldBuffer = Buffer.alloc(4);
+    fieldBuffer.writeInt32BE(number);
+    return fieldBuffer;
 }
 
 // Generate variable byte integer
