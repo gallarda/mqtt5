@@ -384,6 +384,7 @@ function RejectConnection(code, reason) {
         encoded = encodeProperty(mqttProperty.ReasonString, reason);
         newPacket = Buffer.from( [packetType.CONNACK <<4, encoded.length + 3, 0, code, encoded.length ] );
         newPacket = Buffer.concat([ newPacket, encoded ] );
+        let userprop;
     } else {
         newPacket = Buffer.from( [packetType.CONNACK <<4, 3, 0, code, 0 ] );
     }
@@ -414,8 +415,8 @@ function encodeProperty(type, data) {
             encoded.push(setField(data));
             break;
         case mqttPropType.UTF8PAIR:
-            let k = setField(data);
-            let v = setField(data);
+            let k = setField(data[0]);
+            let v = setField(data[1]);
             encoded.push(k,v);
             break;
         case mqttPropType.VARINT:
