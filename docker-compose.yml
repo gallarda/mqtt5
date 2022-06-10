@@ -10,6 +10,7 @@ services:
     volumes:
       - ./njs:/etc/nginx/njs:ro
       - ./proxy.conf:/etc/nginx/nginx.conf:ro
+      - ./stream.conf.d:/etc/nginx/stream.conf.d:ro
       - ./mtls:/mtls
     command: sh -c "/mtls/certs.sh && nginx -g 'daemon off;'"
   broker:
