@@ -377,6 +377,12 @@ function newConnect(packet) {
     return Buffer.concat(newFields);
 }
 
+/**
+ * @param {number} code
+ * @param {any} reason
+ **/
+// Send a CONNACK back to the client with the specified code (eg reasonCode.CONNACK.NotAuthorized), and optional reason.
+// The reason will be sent in properties as a mqttProperty.ReasonString if provided.
 function RejectConnection(code, reason) {
     let encoded;
     let newPacket;
@@ -384,7 +390,6 @@ function RejectConnection(code, reason) {
         encoded = encodeProperty(mqttProperty.ReasonString, reason);
         newPacket = Buffer.from( [packetType.CONNACK <<4, encoded.length + 3, 0, code, encoded.length ] );
         newPacket = Buffer.concat([ newPacket, encoded ] );
-        let userprop;
     } else {
         newPacket = Buffer.from( [packetType.CONNACK <<4, 3, 0, code, 0 ] );
     }
@@ -394,6 +399,11 @@ function RejectConnection(code, reason) {
 // Internal functions
 
 
+/**
+ * @param {number} type
+ * @param {any} data
+ **/
+// encode given property data into the correct type and return it as a Buffer.
 function encodeProperty(type, data) {
     var typeBuffer = Buffer.alloc(1);
     typeBuffer.writeInt8(type, 0);
